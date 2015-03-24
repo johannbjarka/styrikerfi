@@ -1,4 +1,4 @@
-#include <assert.h>
+ #include <assert.h>
 #include <pthread.h>
 #include <semaphore.h>
 #include <stdbool.h>
@@ -22,6 +22,11 @@ struct chairs
 {
     struct customer **customer; /* Array of customers */
     int max;
+	int front;
+	int rear;
+	sem_t mutex;
+	sem_t slots;
+	sem_t items;
     /* TODO: Add more variables related to threads */
     /* Hint: Think of the consumer producer thread problem */
 };
@@ -48,9 +53,9 @@ static void *barber_work(void *arg)
 
     /* Main barber loop */
     while (true) {
-	/* TODO: Here you must add you semaphores and locking logic */
-	customer = chairs->customer[0]; /* TODO: You must choose the customer */
-	thrlab_prepare_customer(customer, barber->room);
+		/* TODO: Here you must add you semaphores and locking logic */
+		customer = chairs->customer[0]; /* TODO: You must choose the customer */
+		thrlab_prepare_customer(customer, barber->room);
         thrlab_sleep(5 * (customer->hair_length - customer->hair_goal));
         thrlab_dismiss_customer(customer, barber->room);
     }
@@ -63,9 +68,14 @@ static void *barber_work(void *arg)
 static void setup(struct simulator *simulator)
 {
     struct chairs *chairs = &simulator->chairs;
-    /* Setup semaphores*/
-    chairs->max = thrlab_get_num_chairs();
     
+	
+    chairs->max = thrlab_get_num_chairs();
+    /* Setup semaphores*/
+	sem_init(&simulator->chairs->mutex, 0, 1);
+	sem_init(&simulator->charis->slots, 0, &simulator->chairs->max);
+	sem_init(&simulator->chairs->items, 0, 0);
+	
     /* Create chairs*/
     chairs->customer = malloc(sizeof(struct customer *) * thrlab_get_num_chairs());
     
@@ -96,6 +106,13 @@ static void cleanup(struct simulator *simulator)
     /* Free barber thread data */
     free(simulator->barber);
     free(simulator->barberThread);
+	
+	/* Destory semaphores*/
+	
+	sem_destory(simulator->chairs->mutex);
+	sem_destory(simulator->chairs->items);
+	sem_destory(simulator->chairs->slots);
+	
 }
 
 /**
