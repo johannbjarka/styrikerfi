@@ -1,0 +1,9 @@
+46.9041575982	/home/hir.is/johannob01/shlab-handout
+45.8257569495	/home/hir.is/johannob01/malloclab-handout
+36.0555127546	/home/hir.is/johannob01/sty15-hw1
+28.2842712474	/home/hir.is/johannob01/sty15-hw1/answers
+14.1421356237	/labs/sty15/.handin/malloclab/johannob01
+10.0	/home/hir.is/johannob01/sty15-hw1/problem7
+10.0	/home/hir.is/johannob01/buflab-handout
+10.0	/home/hir.is
+10.0	/labs/sty15/.handin/shlab/johannob01

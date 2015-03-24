@@ -1,0 +1,8 @@
+problem1:	 Great!
+problem2:	 Great
+problem3:	 Great
+problem4:	 Great.
+problem5:	 correct: 1,2,3,4,5	wrong: 	
+problem6:	(10/10)
+problem7:	 Great!
+problem8:	 Great

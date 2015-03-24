@@ -1,0 +1,13 @@
+Problem 4
+
+Please replace the underscores with the correct expressions
+using the assembly code in the assignment.
+---------- DO NOT CHANGE ANYTHING ABOVE THIS LINE ----------
+
+int foo(int *a, int n, int val) {
+    int i;
+    for (i = ___; ___ ; i = ___) {
+        ;
+    }
+    return i;
+}

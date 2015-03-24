@@ -1,0 +1,21 @@
+Problem 6.
+
+Please make sure that you keep your values in the correct place within
+the commas.
+---------- DO NOT CHANGE ANYTHING ABOVE THIS LINE ----------
+Number;        Decimal;     Binary
+Zero;                0;           
+n/a;                -3;           
+n/a;                 5;           
+n/a;               -11;           
+n/a;                  ;   001 1011
+n/a;                  ;   110 1110
+TMax;                 ;           
+TMin;                 ;           
+TMax+TMax;            ;           
+TMin+TMin;            ;           
+TMin+1;               ;           
+TMin-1;               ;           
+TMax+1;               ;           
+-TMax;                ;           
+-TMin;                ;           

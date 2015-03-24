@@ -1,0 +1,17 @@
+Problem 7.
+
+Please comment every assembly line in the IA32 assembly given bellow.
+---------- DO NOT CHANGE ANYTHING ABOVE THIS LINE ----------
+
+xor %ebx,%ebx        // 0 
+mov 0xc(%ebp),%edx   // b
+mov 0x10(%edx),%eax  // b->t ... b-> is at b+16
+add 0x30(%edx),%eax  // b->u + b->t ... b->u is at b+48
+mov 0x8(%ebp),%edx   // a
+mov %eax,0xec(%edx)  // a->y = b->u + b->t ... a->y is at a+236
+
+b->array + padding equals 16 bytes, b->t takes up 4 bytes, which means
+b->s takes up 28 bytes, so M is either 13 or 14 because of possible padding.
+a->x takes up 236 bytes, with possibly 2 bytes of padding.
+The only way to get N and M as integers with the possible numbers is:
+234 / 2 = 117 => 117/13 = 9. So M = 13 and N = 9. 

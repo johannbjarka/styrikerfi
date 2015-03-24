@@ -1,0 +1,16 @@
+Problem 1.
+Please comment every assembly line in the IA32 assembly given bellow.
+---------- DO NOT CHANGE ANYTHING ABOVE THIS LINE ----------
+
+                                           //
+         pushl    %ebp                     //
+         movl     %esp, %ebp               //
+         movl     8(%ebp), %eax            //
+         movl     12(%ebp), %edx           //
+         leal     (%eax,%eax,2), %ecx      //
+         leal     (%edx,%ecx,2), %ecx      //
+         leal     (%eax,%edx,8), %eax      //
+         movl     mat2(,%eax,4), %eax      //
+         movl     %eax, mat1(,%ecx,4)      //
+         popl     %ebp                     //
+         ret                               //
