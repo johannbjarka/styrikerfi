@@ -1,6 +1,26 @@
 /*
- *
+ * main.c - This simulates a barbershop where customers arrive
+ * and get seated at a waiting room until a barber is ready to
+ * cut their hair. If the waiting room is full the customer is
+ * turned away.
+ * We implement the process using a ring buffer where a chair in
+ * the waiting room is represented by a slot in the ring buffer
+ * and a customer is represented by an item.
+ * We use semaphores to limit thread access to resources to
+ * prevent race conditions.
+ * As soon as a customer arrives we check if there is room in 
+ * the buffer using the slots semaphore and if there is room 
+ * we increment the items semaphore so the barber can begin 
+ * cutting their hair. We use the customer mutex semaphore
+ * to ensure that the customer doesn't leave the barbershop
+ * until the barber has finished cutting his hair.
+ * When a barber receives a customer we increment the slots 
+ * semaphore and decrement the items semaphore in other words 
+ * freeing up a seat in the waiting room. 
+ * Once the barber is done cutting the customer's hair we 
+ * decrement 
  */
+
 
 #include <assert.h>
 #include <pthread.h>
