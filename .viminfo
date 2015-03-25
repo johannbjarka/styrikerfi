@@ -35,18 +35,19 @@
 	j
 
 # File marks:
-'0  532  1  ~/malloclab-handout/mm.c
-'1  579  0  ~/malloclab-handout/mm.c
-'2  398  8  ~/malloclab-handout/mm.c
-'3  95  0  ~/malloclab-handout/mm.c
-'4  124  4  ~/malloclab-handout/mm-firstfit.c
-'5  1  1  ~/malloclab-handout/mm.c
-'6  22  0  ~/shlab-handout/tsh.c
-'7  11  8  ~/shlab-handout/trace11.txt
-'8  338  7  ~/shlab-handout/tsh.c
-'9  184  1  ~/shlab-handout/tsh.c
+'0  1  0  ~/thrlab/thrlab-ref
+'1  532  1  ~/malloclab-handout/mm.c
+'2  579  0  ~/malloclab-handout/mm.c
+'3  398  8  ~/malloclab-handout/mm.c
+'4  95  0  ~/malloclab-handout/mm.c
+'5  124  4  ~/malloclab-handout/mm-firstfit.c
+'6  1  1  ~/malloclab-handout/mm.c
+'7  22  0  ~/shlab-handout/tsh.c
+'8  11  8  ~/shlab-handout/trace11.txt
+'9  338  7  ~/shlab-handout/tsh.c
 
 # Jumplist (newest first):
+-'  1  0  ~/thrlab/thrlab-ref
 -'  532  1  ~/malloclab-handout/mm.c
 -'  579  1  ~/malloclab-handout/mm.c
 -'  398  4  ~/malloclab-handout/mm.c
@@ -144,9 +145,11 @@
 -'  1  5  ~/sty15-hw1/answers/problem1.assembly.txt
 -'  15  9  ~/sty15-hw1/answers/problem1.assembly.txt
 -'  1  3118  ~/buflab-handout/ass4.txt
--'  1  1573  ~/buflab-handout/ans4.txt
 
 # History of marks within files (newest to oldest):
+
+> ~/thrlab/thrlab-ref
+	"	1	0
 
 > ~/malloclab-handout/mm.c
 	"	532	1
@@ -445,9 +448,3 @@
 	+	1	0
 	+	2	0
 	+	1	7
-
-> ~/buflab-handout/answer22.txt
-	"	1	0
-	^	1	0
-	.	1	83
-	+	1	83
