@@ -49,15 +49,24 @@ static void *barber_work(void *arg)
 {
     struct barber *barber = arg;
     struct chairs *chairs = &barber->simulator->chairs;
-    struct customer *customer = 0; /* TODO: Fetch a customer from a chair */
+	
+    struct customer *customer = chairs->customer; /* TODO: Fetch a customer from a chair */
 
     /* Main barber loop */
     while (true) {
 		/* TODO: Here you must add you semaphores and locking logic */
-		customer = chairs->customer[0]; /* TODO: You must choose the customer */
+		
+		
+		sem_wait(&chairs->items);
+		sem_wait(&chairs->mutex);
+		customer = chairs->customer[(++chairs->front) % (chairs->max)]; /* TODO: You must choose the customer */
 		thrlab_prepare_customer(customer, barber->room);
         thrlab_sleep(5 * (customer->hair_length - customer->hair_goal));
         thrlab_dismiss_customer(customer, barber->room);
+		sem_post(&chairs->mutex);
+		sem_post(&chairs->slots);
+		
+		
     }
     return NULL;
 }
@@ -86,12 +95,12 @@ static void setup(struct simulator *simulator)
     /* Start barber threads */
     struct barber *barber;
     for (unsigned int i = 0; i < thrlab_get_num_barbers(); i++) {
-	barber = calloc(sizeof(struct barber), 1);
-	barber->room = i;
-	barber->simulator = simulator;
-	simulator->barber[i] = barber;
-	pthread_create(&simulator->barberThread[i], 0, barber_work, barber);
-	pthread_detach(simulator->barberThread[i]);
+		barber = calloc(sizeof(struct barber), 1);
+		barber->room = i;
+		barber->simulator = simulator;
+		simulator->barber[i] = barber;
+		pthread_create(&simulator->barberThread[i], 0, barber_work, barber);
+		pthread_detach(simulator->barberThread[i]);
     }
 }
 
@@ -109,9 +118,9 @@ static void cleanup(struct simulator *simulator)
 	
 	/* Destory semaphores*/
 	
-	sem_destory(simulator->chairs->mutex);
-	sem_destory(simulator->chairs->items);
-	sem_destory(simulator->chairs->slots);
+	sem_destory(&simulator->chairs->mutex);
+	sem_destory(&simulator->chairs->items);
+	sem_destory(&simulator->chairs->slots);
 	
 }
 
@@ -124,13 +133,19 @@ static void customer_arrived(struct customer *customer, void *arg)
     struct chairs *chairs = &simulator->chairs;
 
     sem_init(&customer->mutex, 0, 0);
-
-    /* TODO: Accept if there is an available chair */
-    thrlab_accept_customer(customer);
-    chairs->customer[0] = customer;
-
-    /* TODO: Reject if there are no available chairs */
-    thrlab_reject_customer(customer);
+	
+	/* Reject if there are no available chairs */
+    if(sem_trywait(&simulator->chairs->slots) == 0){
+		 /* Accept if there is an available chair */
+		sem_wait(&simulator->chairs->mutex);
+		thrlab_accept_customer(customer);
+		chairs->customer[(++simulator->chairs->rear)%(simulator->chairs->max)] = customer;
+		sem_post(&simulator->chairs->mutex);
+		sem_post(&simulator->chairs->items);
+		
+	} else {
+		thrlab_reject_customer(customer);
+	}
 }
 
 int main (int argc, char **argv)
