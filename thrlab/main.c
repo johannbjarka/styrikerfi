@@ -3,22 +3,26 @@
  * and get seated at a waiting room until a barber is ready to
  * cut their hair. If the waiting room is full the customer is
  * turned away.
+ *
  * We implement the process using a ring buffer where a chair in
  * the waiting room is represented by a slot in the ring buffer
  * and a customer is represented by an item.
  * We use semaphores to limit thread access to resources to
  * prevent race conditions.
+ *
  * As soon as a customer arrives we check if there is room in 
  * the buffer using the slots semaphore and if there is room 
  * we increment the items semaphore so the barber can begin 
  * cutting their hair. We use the customer mutex semaphore
  * to ensure that the customer doesn't leave the barbershop
  * until the barber has finished cutting his hair.
- * When a barber receives a customer we increment the slots 
- * semaphore and decrement the items semaphore in other words 
- * freeing up a seat in the waiting room. 
- * Once the barber is done cutting the customer's hair we 
- * decrement 
+ *
+ * We fetch the customer from the waiting room i.e. buffer
+ * and decrement the items semaphore.
+ * Once the barber is done cutting the customer's hair 
+ * we increment the slots semaphore i.e. freeing up a seat in 
+ * the waiting room. 
+ * 
  */
 
 
@@ -48,18 +52,22 @@ void unix_error(char *msg);
 int Sem_post(sem_t *semaphore);
 int Sem_wait(sem_t *semaphore);
 int Sem_trywait(sem_t *semaphore);
+int Pthread_create(pthread_t *thread, const pthread_attr_t *attr, 
+					void *(*start_routine) (void *), void *arg);
+int Pthread_detach(pthread_t thread);
 
 struct chairs
 {
     struct customer **customer; /* Array of customers */
-    int max;
-	int front;
+    /* Variables for the ring buffer */
+	int max;
+	int front; 
 	int rear;
+
+	/* Semaphores */
 	sem_t mutex;
 	sem_t slots;
-	sem_t items;
-    /* TODO: Add more variables related to threads */
-    /* Hint: Think of the consumer producer thread problem */
+	sem_t items;    
 };
 
 struct barber
@@ -76,6 +84,12 @@ struct simulator
     struct barber **barber;
 };
 
+/*
+ * barber_work - Loops constantly with treads waiting for an item to
+ * be placed in the buffer. Once an item is available the thread can
+ * start working on cutting the customer's hair. When the work is 
+ * done a slot is freed.
+ */
 static void *barber_work(void *arg)
 {
     struct barber *barber = arg;
@@ -85,48 +99,38 @@ static void *barber_work(void *arg)
 	
     /* Main barber loop */
     while (true) {
-		/* TODO: Here you must add you semaphores and locking logic */
-		
-		
+		/* Blocks thread if no items are available */
 		Sem_wait(&chairs->items);
+		/* Makes sure only one thread at a time accesses the buffer */
 		Sem_wait(&chairs->mutex);
-		
-		
-		customer = chairs->customer[(++chairs->front) % (chairs->max)]; /* TODO: You must choose the customer */
-		
-		
-		
-		//Sem_wait(&customer->mutex);
-		
+		/* Removes the customer from the buffer */
+		customer = chairs->customer[(++chairs->front) % (chairs->max)];
 		thrlab_prepare_customer(customer, barber->room);
         thrlab_sleep(5 * (customer->hair_length - customer->hair_goal));
-		
-		
-        
 		thrlab_dismiss_customer(customer, barber->room);
+		/* Unblocks the customer thread */
 		Sem_post(&customer->mutex);
-		
+		/* Unlock the buffer */
 		Sem_post(&chairs->mutex);
-		Sem_post(&chairs->slots);
-		
-		
+		/* Free up a slot */
+		Sem_post(&chairs->slots);		
     }
     return NULL;
 }
 
-/**
+/*
  * Initialize data structures and create waiting barber threads.
  */
 static void setup(struct simulator *simulator)
 {
     struct chairs *chairs = &simulator->chairs;
-    
-	
+   
+    /* Initializing variables  */
     chairs->max = thrlab_get_num_chairs();
 	chairs->front = 0;
 	chairs->rear = 0;
 	
-    /* Setup semaphores*/
+    /* Set up semaphores*/
 	sem_init(&chairs->mutex, 0, 1);
 	sem_init(&chairs->slots, 0, chairs->max);
 	sem_init(&chairs->items, 0, 0);
@@ -145,8 +149,8 @@ static void setup(struct simulator *simulator)
 		barber->room = i;
 		barber->simulator = simulator;
 		simulator->barber[i] = barber;
-		pthread_create(&simulator->barberThread[i], 0, barber_work, barber);
-		pthread_detach(simulator->barberThread[i]);
+		Pthread_create(&simulator->barberThread[i], 0, barber_work, barber);
+		Pthread_detach(simulator->barberThread[i]);
     }
 }
 
@@ -162,35 +166,40 @@ static void cleanup(struct simulator *simulator)
     free(simulator->barber);
     free(simulator->barberThread);
 	
-	/* Destory semaphores*/
-	
+	/* Destroy semaphores*/
 	sem_destroy(&simulator->chairs.mutex);
 	sem_destroy(&simulator->chairs.items);
-	sem_destroy(&simulator->chairs.slots);
-	
+	sem_destroy(&simulator->chairs.slots);	
 }
 
-/**
- * Called in a new thread each time a customer has arrived.
+/*
+ * customer_arrived - When a customer arrives we check if there is
+ * an available chair if not the customer is turned away. If there
+ * is an empty chair we place the customer in the chair where he 
+ * waits until a barber can service him.
  */
 static void customer_arrived(struct customer *customer, void *arg)
 {
     struct simulator *simulator = arg;
     struct chairs *chairs = &simulator->chairs;
-
     sem_init(&customer->mutex, 0, 0);
 	
-	/* Reject if there are no available chairs */
+	/* Accepts a customer if there is an available chair */
     if(Sem_trywait(&chairs->slots) == 0){
-		 /* Accept if there is an available chair */
+		/* Makes sure only one thread at a time accesses the buffer*/
 		Sem_wait(&chairs->mutex);
 		thrlab_accept_customer(customer);
+		/* Inserts a customer to the buffer */
 		chairs->customer[(++chairs->rear)%(chairs->max)] = customer;
+		/* Unlocks the buffer */
 		Sem_post(&chairs->mutex);
+		/* Fills up a slot */
 		Sem_post(&chairs->items);
+		/* Blocks the customer thread */
 		Sem_wait(&customer->mutex);
 		
 	} else {
+		/* Reject a customer if there are no available chairs */
 		thrlab_reject_customer(customer);
 	}
 }
@@ -236,6 +245,33 @@ int Sem_trywait(sem_t *semaphore)
 	int val;
 	if((val = sem_trywait(semaphore)) < 0){
 		unix_error("Try wait error");
+	}
+	return val;
+}
+
+/*
+ * Pthread_create - wrapper for the pthread_create function
+ */
+int Pthread_create(pthread_t *thread, const pthread_attr_t *attr, 
+					void *(*start_routine) (void *), void *arg)
+{
+	int val;
+	if((val = pthread_create(thread, attr, start_routine, arg)) != 0)
+	{
+		unix_error("Pthread create error");
+	}
+	return val;
+}
+
+/*
+ * Pthread_detach - wrapper for the pthread_detach function
+ */
+int Pthread_detach(pthread_t thread)
+{
+	int val;
+	if((val = pthread_detach(thread)) != 0)
+	{
+		unix_error("Pthread detach error");
 	}
 	return val;
 }
