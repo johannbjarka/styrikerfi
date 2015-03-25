@@ -1,10 +1,16 @@
- #include <assert.h>
+/*
+ *
+ */
+
+#include <assert.h>
 #include <pthread.h>
 #include <semaphore.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "help.h"
+#include <errno.h>
+#include <string.h>
 
 /*********************************************************
  * NOTE TO STUDENTS: Before you do anything else, please
@@ -17,6 +23,11 @@
  * SSN: 0812815059
  * === End User Information ===
  ********************************************************/
+
+void unix_error(char *msg);
+int Sem_post(sem_t *semaphore);
+int Sem_wait(sem_t *semaphore);
+int Sem_trywait(sem_t *semaphore);
 
 struct chairs
 {
@@ -57,15 +68,15 @@ static void *barber_work(void *arg)
 		/* TODO: Here you must add you semaphores and locking logic */
 		
 		
-		sem_wait(&chairs->items);
-		sem_wait(&chairs->mutex);
+		Sem_wait(&chairs->items);
+		Sem_wait(&chairs->mutex);
 		
 		
 		customer = chairs->customer[(++chairs->front) % (chairs->max)]; /* TODO: You must choose the customer */
 		
 		
 		
-		//sem_wait(&customer->mutex);
+		//Sem_wait(&customer->mutex);
 		
 		thrlab_prepare_customer(customer, barber->room);
         thrlab_sleep(5 * (customer->hair_length - customer->hair_goal));
@@ -73,10 +84,10 @@ static void *barber_work(void *arg)
 		
         
 		thrlab_dismiss_customer(customer, barber->room);
-		sem_post(&customer->mutex);
+		Sem_post(&customer->mutex);
 		
-		sem_post(&chairs->mutex);
-		sem_post(&chairs->slots);
+		Sem_post(&chairs->mutex);
+		Sem_post(&chairs->slots);
 		
 		
     }
@@ -150,18 +161,63 @@ static void customer_arrived(struct customer *customer, void *arg)
     sem_init(&customer->mutex, 0, 0);
 	
 	/* Reject if there are no available chairs */
-    if(sem_trywait(&chairs->slots) == 0){
+    if(Sem_trywait(&chairs->slots) == 0){
 		 /* Accept if there is an available chair */
-		sem_wait(&chairs->mutex);
+		Sem_wait(&chairs->mutex);
 		thrlab_accept_customer(customer);
 		chairs->customer[(++chairs->rear)%(chairs->max)] = customer;
-		sem_post(&chairs->mutex);
-		sem_post(&chairs->items);
-		sem_wait(&customer->mutex);
+		Sem_post(&chairs->mutex);
+		Sem_post(&chairs->items);
+		Sem_wait(&customer->mutex);
 		
 	} else {
 		thrlab_reject_customer(customer);
 	}
+}
+
+/*
+ * Unix_error - unix-style error routine
+ */
+void unix_error(char *msg)
+{
+    fprintf(stdout, "%s: %s\n", msg, strerror(errno));
+    exit(1);
+}
+
+/*
+ * Sem_post - wrapper for the sem_post function
+ */
+int Sem_post(sem_t *semaphore)
+{
+	int val;
+	if((val = sem_post(semaphore)) < 0){
+		unix_error("Post error");
+	}
+	return val;
+}
+
+/*
+ * Sem_wait - wrapper for the sem_wait function
+ */
+int Sem_wait(sem_t *semaphore)
+{
+	int val;
+	if((val = sem_wait(semaphore)) < 0){
+		unix_error("Wait error");
+	}
+	return val;
+}
+
+/*
+ * Sem_trywait - wrapper for the sem_trywait function
+ */
+int Sem_trywait(sem_t *semaphore)
+{
+	int val;
+	if((val = sem_trywait(semaphore)) < 0){
+		unix_error("Try wait error");
+	}
+	return val;
 }
 
 int main (int argc, char **argv)
